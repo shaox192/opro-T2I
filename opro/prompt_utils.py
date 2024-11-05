@@ -14,8 +14,9 @@
 """The utility functions for prompting GPT and Google Cloud models."""
 
 import time
-import google.generativeai as palm
+# import google.generativeai as palm
 import openai
+import numpy as np
 
 
 def call_openai_server_single_prompt(
@@ -130,3 +131,10 @@ def call_palm_server_from_cloud(
     return call_palm_server_from_cloud(
         input_text, max_decode_steps=max_decode_steps, temperature=temperature
     )
+
+
+def call_VLM_scorer(prompt, gt_img, metric, scorer_prms):
+  #TODO: implement the VLM and scorer
+
+  return int(np.random.rand(1)[0] * 100)
+
