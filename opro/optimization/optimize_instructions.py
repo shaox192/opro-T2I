@@ -53,7 +53,7 @@ sys.path.insert(0, OPRO_ROOT_PATH)
 
 from absl import app
 from absl import flags
-import google.generativeai as palm
+# import google.generativeai as palm
 import numpy as np
 import openai
 from opro import prompt_utils
@@ -705,7 +705,7 @@ def main(_):
   # decodes in model parameters, because those values are limited by model
   # serving configs.
   num_generated_instructions_in_each_step = 8
-  num_search_steps = 200
+  num_search_steps = 3
 
   initial_instructions = [
       "Let's solve the problem.",
