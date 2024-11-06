@@ -79,15 +79,23 @@ _DATASET = flags.DEFINE_string(
     "dataset", "mscoco", "The name of dataset to search for instructions on."
 )
 
+_PARAM_NUM_SEARCH_STEPS = flags.DEFINE_integer(
+    "param-num-search-steps", 3, "how many rounds of opro evolutions to run"
+)
+
+_PARAM_NUM_GEN_PER_SEARCH = flags.DEFINE_integer(
+    "param-num-gen-per-search", 6, "number of prompts to be generated in each evolution step"
+)
+
 
 def main(_):
   openai_api_key = _OPENAI_API_KEY.value
-  # palm_api_key = _PALM_API_KEY.value
   scorer_name = _SCORER.value
   optimizer_llm_name = _OPTIMIZER.value
   dataset_name = _DATASET.value.lower()
-  # task_name = _TASK.value
-  # meta_prompt_type = _META_PROMPT_TYPE.value
+
+  num_generated_instructions_in_each_step = _PARAM_NUM_GEN_PER_SEARCH.value
+  num_search_steps = _PARAM_NUM_SEARCH_STEPS.value
 
   assert dataset_name in {
     "mscoco",
@@ -221,13 +229,6 @@ def main(_):
     old_instruction_score_threshold = 0.3
 
   optimizer_llm_temperature = optimizer_llm_dict["temperature"]
-
-  # To change the number of generated instructions in each step, one should
-  # edit the value of the variable below, instead of editing the number of
-  # decodes in model parameters, because those values are limited by model
-  # serving configs.
-  num_generated_instructions_in_each_step = 4
-  num_search_steps = 2
 
   max_num_instructions = 20  # the maximum number of instructions and scores in the meta-prompt
 

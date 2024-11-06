@@ -17,6 +17,8 @@ python ./opro/optimization/optimize_instructions_T2I.py \
        --optimizer="gpt-3.5-turbo" \
        --scorer="relevance" \
        --dataset="mscoco" \
+       --param-num-search-steps 3 \
+       --param-num-gen-per-search 4 \
        --openai_api_key="<your_openai_api_key>"
 
 exit
