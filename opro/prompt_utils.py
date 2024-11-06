@@ -135,6 +135,18 @@ def call_palm_server_from_cloud(
 
 def call_VLM_scorer(prompt, gt_img, metric, scorer_prms):
   #TODO: implement the VLM and scorer
+  import torch
+  from diffusers import StableDiffusionPipeline, DPMSolverMultistepScheduler
+
+  # T2I
+  model_id = "runwayml/stable-diffusion-v1-5"
+  pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16)
+  pipe = pipe.to("cuda")
+  pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
+  generator = torch.Generator("cuda").manual_seed(0)
+  image = pipe(prompt, generator=generator, num_inference_steps=20).images[0]
+
+  # Scorer
 
   return int(np.random.rand(1)[0] * 100)
 
