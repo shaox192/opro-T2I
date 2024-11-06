@@ -99,8 +99,7 @@ def main(_):
 
   assert dataset_name in {
     "mscoco",
-    "lexica",
-  }, "The lower-case dataset name must be one of mscoco, lexica."
+  }, "The lower-case dataset name must be one of mscoco"
 
   assert scorer_name in {
       "relevance",
@@ -122,10 +121,8 @@ def main(_):
 
   if dataset_name == "mscoco":
     root_data_folder_path = os.path.join(ROOT_DATA_FOLDER_PATH, "mscoco")
-  elif dataset_name == "lexica":
-    root_data_folder_path = os.path.join(ROOT_DATA_FOLDER_PATH, "lexica")
   else:
-    raise NotImplementedError("only mscoco and lexica datasets for now")
+    raise NotImplementedError("only mscoco datasets for now")
 
   # =================== create the result directory ==========================
   datetime_str = (
@@ -210,11 +207,8 @@ def main(_):
   if dataset_name == "mscoco":
     raw_data = data_utils.load_mscoco_image_prompt_pairs(root_data_folder_path, )
 
-  elif dataset_name == "lexica":
-    raw_data = data_utils.load_lexica_image_prompt_pairs(root_data_folder_path, )
-
   else:
-    raise NotImplementedError("only mscoco and lexica datasets for now")
+    raise NotImplementedError("only mscoco datasets for now")
   
   num_examples = len(raw_data)
 
