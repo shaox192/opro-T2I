@@ -138,23 +138,32 @@ def call_VLM_scorer(prompt, gt_img, metric, scorer_prms):
 
   # T2I
   import torch
-  from diffusers import StableDiffusionPipeline, DPMSolverMultistepScheduler
+  from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, DPMSolverMultistepScheduler
 
+  # Uncomment if you are using GPU
+  # model_id = "stabilityai/stable-diffusion-3.5-large"
+  # pipe = StableDiffusion3Pipeline.from_pretrained(model_id, torch_dtype=torch.bfloat16)
+  # device = "cuda:2"
+
+  # Uncomment if you are using CPU
   model_id = "runwayml/stable-diffusion-v1-5"
   pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16)
-  pipe = pipe.to("cuda")
+  device = "cpu"
+
+  pipe = pipe.to(device)
+
   pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
-  generator = torch.Generator("cuda").manual_seed(0)
+  generator = torch.Generator(device).manual_seed(0)
   image = pipe(prompt, generator=generator, num_inference_steps=20).images[0]
 
   # Constant relevance score
   from transformers import CLIPProcessor, CLIPModel
 
   model_id = "openai/clip-vit-base-patch32"
-  model = CLIPModel.from_pretrained(model_id).to("cuda")
+  model = CLIPModel.from_pretrained(model_id).to(device)
   processor = CLIPProcessor.from_pretrained(model_id)
 
-  inputs = processor(text=[prompt], images=image, return_tensors="pt", padding=True).to("cuda")
+  inputs = processor(text=[prompt], images=image, return_tensors="pt", padding=True).to(device)
   outputs = model(**inputs)
   logits_per_image = outputs.logits_per_image
   probs = logits_per_image.softmax(dim=1)
