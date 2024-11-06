@@ -517,6 +517,7 @@ def run_evolution(**kwargs):
 
   # evaluate initial instructions
   print("\n============== evaluating initial instructions ===============")
+  train_index = train_index[:3]
   for instruction in initial_instructions:
     print(f"""computing the score of "{instruction}" by prompting""")
 
@@ -1033,3 +1034,271 @@ def run_evolution(**kwargs):
     with open(os.path.join(save_folder, "results_dict.pkl"), "wb") as fp:
       pickle.dump(results_dict, fp)
     print(f"\nsaved all results to\n{save_folder}")
+
+  
+
+def gen_meta_prompt_T2I(
+    old_instructions_and_scores,
+    old_instruction_score_threshold=0.1,
+    max_num_instructions=1000,
+    num_score_buckets=np.inf,
+):
+  """Generate meta prompt for instruction rewriting.
+
+  Args:
+   old_instructions_and_scores (list): a list of (instruction, score, i_step)
+     pairs.
+   old_instruction_score_threshold (float): only add old instructions with score
+     no less than this threshold.
+   max_num_instructions (int): the maximum number of instructions in the meta
+     prompt.
+   num_score_buckets (np.inf or int): the number of score buckets when we
+     convert float accuracies to integers. Default to np.inf for not
+     bucketizing.
+
+  Returns:
+   meta_prompt (str): the generated meta prompt.
+  """
+  # add old instructions
+  old_instructions_and_scores_str = gen_ins_and_score_pairs_substr(
+      old_instructions_and_scores=old_instructions_and_scores,
+      old_instruction_score_threshold=old_instruction_score_threshold,
+      max_num_instructions=max_num_instructions,
+      return_str_only=True,
+      # num_score_buckets=num_score_buckets,
+  )
+  #TODO: redesign the meta instructions
+  meta_instruction = (
+      f"I have some texts along with their corresponding scores."
+        " The texts are arranged in ascending order based on their scores,"
+        " where higher scores indicate better quality.\n\n"
+  )
+
+  meta_prompt = meta_instruction + old_instructions_and_scores_str
+
+  meta_prompt += (
+          "\n\nWrite your new text that is different from the old ones and"
+          " has a score as high as possible. Write the text in square brackets."
+      )
+  
+  return meta_prompt
+
+
+def eval_prompts(prompts_ls, gt_img, scorer, verbose=False):
+  """
+  
+  Returns:
+    scores (list): the scores of the prompts.
+  """
+  # evaluate initial instructions
+  scores = []
+  for pro in prompts_ls:
+    if verbose:
+      print(f"computing the score of '{pro}' by prompting")
+
+    score = scorer(pro, gt_img)
+    scores.append(score)
+
+  # average_score = np.average(scores)
+  # print(f"average score: {average_score}")
+
+  return scores
+
+
+def run_evolution_T2I(**kwargs):
+  """The function for evolution."""
+  # ================= experiment configurations =============================
+  raw_data = kwargs["raw_data"]
+  
+  num_search_steps = kwargs["num_search_steps"]
+  old_instruction_score_threshold = kwargs["old_instruction_score_threshold"]
+  optimizer_llm_dict = kwargs["optimizer_llm_dict"]
+
+  optimizer_llm_temperature = kwargs["optimizer_llm_temperature"]
+  optimizer_llm_temperature_schedule = (
+      kwargs["optimizer_llm_temperature_schedule"]
+      if "optimizer_llm_temperature_schedule" in kwargs
+      else "constant"
+  )
+  optimizer_llm_temperature_end = (
+      kwargs["optimizer_llm_temperature_end"]
+      if "optimizer_llm_temperature_end" in kwargs
+      else None
+  )
+
+  call_scorer_server_func = kwargs["call_scorer_server_func"]
+  call_optimizer_server_func = kwargs["call_optimizer_server_func"]
+
+  # num_score_buckets = kwargs["num_score_buckets"]
+  max_num_instructions = kwargs["max_num_instructions"]
+
+  num_generated_instructions_in_each_step = kwargs[
+      "num_generated_instructions_in_each_step"
+  ]
+
+  save_folder = kwargs["save_folder"]
+  result_by_image_folder = kwargs["result_by_image_folder"]
+  verbose = kwargs["verbose"] if "verbose" in kwargs else False
+
+  # =================== assertions =====================
+  assert optimizer_llm_temperature_schedule in {
+      "constant",
+      "linear_increase",
+  }, "The temperature schedule should be constant or linear_increase."
+
+  # =================== save configurations to json file ====================
+  configs_dict = dict()
+  configs_dict["optimizer_llm_dict"] = optimizer_llm_dict
+  configs_dict["optimizer_llm_temperature"] = optimizer_llm_temperature
+  configs_dict["optimizer_llm_temperature_schedule"] = (
+      optimizer_llm_temperature_schedule
+  )
+  configs_dict["optimizer_llm_temperature_end"] = optimizer_llm_temperature_end
+  with open(os.path.join(save_folder, "configs_dict.json"), "w") as f:
+    json.dump(configs_dict, f, indent=4)
+  # ===================================================================== 
+
+  print(
+      f"optimizer llm temperature: {optimizer_llm_temperature}, schedule:"
+      f" {optimizer_llm_temperature_schedule}"
+  )
+  print(
+      f"generating {num_generated_instructions_in_each_step} instructions in"
+      f" each step, run for {num_search_steps} steps"
+  )
+  print(
+      "discarding generated instructions with score less than:"
+      f" {old_instruction_score_threshold} (old_instruction_score_threshold)"
+  )
+  # print(f"num_score_buckets: {num_score_buckets}")
+
+
+  #TODO: maybe parallelize this?
+  for i, (im_id, prompt_ls, img) in enumerate(raw_data):
+    
+    ### some cumulative parameters
+    # the new instructions, format: [(instruction, score, step_index)]
+    old_instructions_and_scores = []
+    meta_prompts = []  # format: [(meta_prompt, step_index)]
+    old_instruction_md5_hashstrings_set = set() # to avoid re-evaluating instructions
+    ###
+
+    print("\n============== evaluating initial instructions ===============")
+    score_ls = eval_prompts(prompt_ls, img, call_scorer_server_func, verbose)
+
+    for j, p in enumerate(prompt_ls):
+      old_instructions_and_scores.append((p, score_ls[j], -1))
+
+    # evolution
+    print("\n============== Optimizing ===============")
+    for i_step in range(num_search_steps):
+      print(f"\n--Step {i_step}/{num_search_steps}--")
+      if not i_step % 10:
+        print(f"*old_instructions_and_scores: {old_instructions_and_scores}")
+
+      if optimizer_llm_temperature_schedule == "linear_increase":
+        optimizer_llm_temperature_curr = (
+            optimizer_llm_temperature
+            + i_step
+            / num_search_steps
+            * (optimizer_llm_temperature_end - optimizer_llm_temperature)
+        )
+      else:
+        optimizer_llm_temperature_curr = optimizer_llm_temperature
+      print(f"*current optimizer_llm_temperature: {optimizer_llm_temperature_curr}")
+
+      # generate new instructions
+      meta_prompt = gen_meta_prompt_T2I(
+          old_instructions_and_scores=old_instructions_and_scores,
+          old_instruction_score_threshold=old_instruction_score_threshold,
+          max_num_instructions=max_num_instructions,
+      )
+
+      print(f"\n*meta_prompt: \n\n{meta_prompt}\n")
+
+      meta_prompts.append((meta_prompt, i_step))
+      remaining_num_instructions_to_generate = num_generated_instructions_in_each_step
+      generated_instructions_raw = []
+      while remaining_num_instructions_to_generate > 0:
+        optimizer_llm_input_text = meta_prompt
+        # generate instructions
+        # print(f"current temperature: {optimizer_llm_temperature_curr}")
+        raw_outputs = call_optimizer_server_func(
+            optimizer_llm_input_text,
+            temperature=optimizer_llm_temperature_curr,
+        )
+
+        # Extract the generated instructions from the optimizer LLM output. Only
+        # keep some samples if the desired number of remaining instructions
+        # is smaller than the total number of decodes in this step.
+        raw_outputs = raw_outputs[:remaining_num_instructions_to_generate]
+        generated_instructions_raw += [
+            extract_string_in_square_brackets(string)
+            for string in raw_outputs
+        ]
+        remaining_num_instructions_to_generate -= optimizer_llm_dict[
+            "batch_size"
+        ]
+
+      generated_instructions_raw = list(
+          map(eval_utils.polish_sentence, generated_instructions_raw)
+      )
+      print(f"\ninitially generated instructions: {generated_instructions_raw}\n")
+
+      # do not evaluate old instructions again
+      generated_instructions = []  # the new instructions generated in this step
+      for ins in generated_instructions_raw:
+        ins_md5_hashstring = eval_utils.instruction_to_filename(
+            ins, md5_hashing=True
+        )
+        if ins_md5_hashstring not in old_instruction_md5_hashstrings_set:
+          generated_instructions.append(ins)
+          old_instruction_md5_hashstrings_set.add(ins_md5_hashstring)
+        else:
+          print(f"already evaluated '{ins}' previously")
+      generated_instructions = list(set(generated_instructions))
+
+      # get rid of instructions that are too long
+      to_evaluate_instructions = []
+      for instruction in generated_instructions:
+        if len(instruction) > 500:
+          print(f"Step {i_step}, instruction: {instruction}, too long, skipped")
+          continue
+        to_evaluate_instructions.append(instruction)
+      print(f"\nto-evaluate generated instructions: {to_evaluate_instructions}\n")
+
+      # evaluate these newly generated prompts: 
+      score_ls = eval_prompts(to_evaluate_instructions, img, call_scorer_server_func, verbose)
+      average_score = np.average(score_ls)
+      print(f"Step {i_step}, avg_score: {average_score}")
+
+      # save this step
+      for j, p in enumerate(to_evaluate_instructions):
+        old_instructions_and_scores.append((p, score_ls[j], i_step))
+
+      # ===================== save up-to-date results ===========================
+      results = {}
+      results["instructions"] = [d[0] for d in old_instructions_and_scores]
+      results["scores"] = [d[1] for d in old_instructions_and_scores]
+      results["step"] = [d[2] for d in old_instructions_and_scores]
+      results = pd.DataFrame(results)
+      save_p = os.path.join(result_by_image_folder, f"{im_id}.csv")
+      results.to_csv(save_p, index=False)
+      print(f"saved results for image: {im_id} to: {save_p}")
+
+
+if __name__ == "__main__":
+  # 1. test gen_meta_prompt_T2I
+  old_instructions_and_scores = [
+    ("This is a test instruction 1", 0.1, 0),
+    ("This is a test instruction 2", 0.2, 1),
+    ("This is a test instruction 3", 0.3, 2),
+  ]
+
+  meta_prompt = gen_meta_prompt_T2I(
+    old_instructions_and_scores=old_instructions_and_scores,
+    old_instruction_score_threshold=0.1,
+    max_num_instructions=5
+  )
+
+  print(meta_prompt)
