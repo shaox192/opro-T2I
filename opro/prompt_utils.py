@@ -147,21 +147,20 @@ def call_VLM_scorer(prompt, gt_img, metric, scorer_prms):
   generator = torch.Generator("cuda").manual_seed(0)
   image = pipe(prompt, generator=generator, num_inference_steps=20).images[0]
 
-  # Scorer
-  if metric is "relevance":
-      from transformers import CLIPProcessor, CLIPModel
+  # Constant relevance score
+  from transformers import CLIPProcessor, CLIPModel
 
-      model_id = "openai/clip-vit-base-patch32"
-      model = CLIPModel.from_pretrained(model_id).to("cuda")
-      processor = CLIPProcessor.from_pretrained(model_id)
+  model_id = "openai/clip-vit-base-patch32"
+  model = CLIPModel.from_pretrained(model_id).to("cuda")
+  processor = CLIPProcessor.from_pretrained(model_id)
 
-      inputs = processor(text=[prompt], images=gt_img, return_tensors="pt", padding=True).to("cuda")
-      outputs = model(**inputs)
-      logits_per_image = outputs.logits_per_image
-      probs = logits_per_image.softmax(dim=1)
-      relevance = probs.detach().cpu().numpy()[0][0]
+  inputs = processor(text=[prompt], images=image, return_tensors="pt", padding=True).to("cuda")
+  outputs = model(**inputs)
+  logits_per_image = outputs.logits_per_image
+  probs = logits_per_image.softmax(dim=1)
+  relevance = probs.detach().cpu().numpy()[0][0]
 
-      return relevance
+  # controlled score: such as aesthetic
 
   return int(np.random.rand(1)[0] * 100)
 
