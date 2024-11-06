@@ -1096,7 +1096,7 @@ def eval_prompts(prompts_ls, gt_img, scorer, verbose=False):
     if verbose:
       print(f"computing the score of '{pro}' by prompting")
 
-    score = scorer(pro, gt_img)
+    score = scorer(pro, gt_img)  # TODO: query as the first parameter
     scores.append(score)
 
   # average_score = np.average(scores)

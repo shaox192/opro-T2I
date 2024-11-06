@@ -170,18 +170,18 @@ def relevance_scorer(prompt, image, device):
     return relevance
 
 
-def call_VLM_scorer(prompt, gt_img, metric, scorer_prms):
+def call_VLM_scorer(query, prompt, gt_img, metric, scorer_prms):
   #TODO: implement the VLM and scorer
 
   device = "cuda:2"
 
-  # T2I
+  # T2I, currently--directly optimize rwritten query
   image = T2I(prompt, device)
 
   # Constant relevance score
-  relevance = relevance_scorer(prompt, image, device)
+  relevance = relevance_scorer(query, image, device)
 
-  # controlled score: such as aesthetic
+  # controlled score: such as aesthetic, final score is a combination of relevance and X
 
   return int(np.random.rand(1)[0] * 100)
 
