@@ -133,19 +133,17 @@ def call_palm_server_from_cloud(
     )
 
 
-def T2I(prompt):
+def T2I(prompt, device):
     import torch
     from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, DPMSolverMultistepScheduler
 
     # Uncomment if you are using GPU
     model_id = "stabilityai/stable-diffusion-3.5-large"
     pipe = StableDiffusion3Pipeline.from_pretrained(model_id, torch_dtype=torch.bfloat16)
-    device = "cuda:2"
 
     # Uncomment if you are using CPU
     # model_id = "runwayml/stable-diffusion-v1-5"
     # pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16)
-    # device = "cpu"
 
     pipe = pipe.to(device)
 
@@ -156,7 +154,7 @@ def T2I(prompt):
     return image
 
 
-def relevance_scorer(prompt, image):
+def relevance_scorer(prompt, image, device):
     from transformers import CLIPProcessor, CLIPModel
 
     model_id = "openai/clip-vit-base-patch32"
@@ -175,11 +173,13 @@ def relevance_scorer(prompt, image):
 def call_VLM_scorer(prompt, gt_img, metric, scorer_prms):
   #TODO: implement the VLM and scorer
 
+  device = "cuda:2"
+
   # T2I
-  image = T2I(prompt)
+  image = T2I(prompt, device)
 
   # Constant relevance score
-  relevance = relevance_scorer(prompt, image)
+  relevance = relevance_scorer(prompt, image, device)
 
   # controlled score: such as aesthetic
 
