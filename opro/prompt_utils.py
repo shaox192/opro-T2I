@@ -141,14 +141,14 @@ def call_VLM_scorer(prompt, gt_img, metric, scorer_prms):
   from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, DPMSolverMultistepScheduler
 
   # Uncomment if you are using GPU
-  # model_id = "stabilityai/stable-diffusion-3.5-large"
-  # pipe = StableDiffusion3Pipeline.from_pretrained(model_id, torch_dtype=torch.bfloat16)
-  # device = "cuda:2"
+  model_id = "stabilityai/stable-diffusion-3.5-large"
+  pipe = StableDiffusion3Pipeline.from_pretrained(model_id, torch_dtype=torch.bfloat16)
+  device = "cuda:2"
 
   # Uncomment if you are using CPU
-  model_id = "runwayml/stable-diffusion-v1-5"
-  pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16)
-  device = "cpu"
+  # model_id = "runwayml/stable-diffusion-v1-5"
+  # pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16)
+  # device = "cpu"
 
   pipe = pipe.to(device)
 
