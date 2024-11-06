@@ -5,7 +5,7 @@
 ### Todo
 
 - [ ] **VLM and Scorer**
-    This should idealy go into [prompt_utils.py](./opro/prompt_utils.py). I have a placeholder there that basically gives a random number. We would probably want to include relevance first as implemented as a clip loss between images and original user prompts. 
+    This should idealy go into [prompt_utils.py](./opro/prompt_utils.py). I have a placeholder there that basically gives a random number. Relevance calculation is already added but it always gives one when using Stable Diffusion. Another scorer to be combined with relevance scorer is expected. -- Relevance is always expected.
 
 - [ ] **Datasets, and the interface for the datasets**
     I have a skeleton in [data_utils.py](./opro/data_utils.py)
