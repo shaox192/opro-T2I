@@ -188,7 +188,7 @@ def main(_):
   print("\n======== testing the scorer and optimizer servers ===========")
   #TODO scorer test
   scorer_test_output = call_scorer_server_func(
-      "img prompt here", "ground truth image here"
+      "orig_prompt_here", "img prompt here", "ground truth image here"
   )
   print(f"scorer test output scores: {scorer_test_output}")
 
