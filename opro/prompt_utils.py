@@ -135,10 +135,11 @@ def call_palm_server_from_cloud(
 
 def call_VLM_scorer(prompt, gt_img, metric, scorer_prms):
   #TODO: implement the VLM and scorer
+
+  # T2I
   import torch
   from diffusers import StableDiffusionPipeline, DPMSolverMultistepScheduler
 
-  # T2I
   model_id = "runwayml/stable-diffusion-v1-5"
   pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16)
   pipe = pipe.to("cuda")
@@ -147,6 +148,20 @@ def call_VLM_scorer(prompt, gt_img, metric, scorer_prms):
   image = pipe(prompt, generator=generator, num_inference_steps=20).images[0]
 
   # Scorer
+  if metric is "relevance":
+      from transformers import CLIPProcessor, CLIPModel
+
+      model_id = "openai/clip-vit-base-patch32"
+      model = CLIPModel.from_pretrained(model_id).to("cuda")
+      processor = CLIPProcessor.from_pretrained(model_id)
+
+      inputs = processor(text=[prompt], images=gt_img, return_tensors="pt", padding=True).to("cuda")
+      outputs = model(**inputs)
+      logits_per_image = outputs.logits_per_image
+      probs = logits_per_image.softmax(dim=1)
+      relevance = probs.detach().cpu().numpy()[0][0]
+
+      return relevance
 
   return int(np.random.rand(1)[0] * 100)
 
