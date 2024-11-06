@@ -4,14 +4,14 @@
 
 ### Todo
 
-- [ ] VLM and Scorer
+- [ ] **VLM and Scorer**
     This should idealy go into [prompt_utils.py](./opro/prompt_utils.py). I have a placeholder there that basically gives a random number. We would probably want to include relevance first as implemented as a clip loss between images and original user prompts. 
 
-- [ ] Datasets, and the interface for the datasets. 
+- [ ] **Datasets, and the interface for the datasets**
     I have a skeleton in [data_utils.py](./opro/data_utils.py)
     Right now it loads ground truth images too (at least for mscoco we have expected images), but this is may not be necessary.
 
-- [ ] Some visualization for the slides
+- [ ] **Some visualization for the slides**
     Do we want to at least run a couple images, show the results, and maybe also an optimization curve from the scores?
 
 ### Updates
