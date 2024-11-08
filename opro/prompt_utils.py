@@ -12,11 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """The utility functions for prompting GPT and Google Cloud models."""
-
+import os
+import torch
+import torch.nn as nn
 import time
 # import google.generativeai as palm
 import openai
 import numpy as np
+from os.path import expanduser
+from urllib.request import urlretrieve
 
 
 def call_openai_server_single_prompt(
@@ -170,6 +174,38 @@ def relevance_scorer(prompt, image, device):
     return relevance
 
 
+def get_aesthetic_model(clip_model="vit_l_14"):
+    """load the aethetic model"""
+    home = expanduser("~")
+    cache_folder = home + "/.cache/emb_reader"
+    path_to_model = cache_folder + "/sa_0_4_"+clip_model+"_linear.pth"
+    if not os.path.exists(path_to_model):
+        os.makedirs(cache_folder, exist_ok=True)
+        url_model = (
+            "https://github.com/LAION-AI/aesthetic-predictor/blob/main/sa_0_4_"+clip_model+"_linear.pth?raw=true"
+        )
+        urlretrieve(url_model, path_to_model)
+    if clip_model == "vit_l_14":
+        m = nn.Linear(768, 1)
+    elif clip_model == "vit_b_32":
+        m = nn.Linear(512, 1)
+    else:
+        raise ValueError()
+    s = torch.load(path_to_model)
+    m.load_state_dict(s)
+    m.eval()
+    return m
+
+def aesthetic_scorer(image, device='cpu'):
+    import clip
+    model, preprocess = clip.load("ViT-L/14", device=device)
+    aesthetic_model = get_aesthetic_model().to(device)
+    image = preprocess(image).unsqueeze(0).to(device)
+    with torch.no_grad():
+        image_features = model.encode_image(image)
+        image_features /= image_features.norm(dim=-1, keepdim=True)
+        return aesthetic_model(image_features.float()).detach().item()
+
 def call_VLM_scorer(query, prompt, gt_img, metric, scorer_prms):
   #TODO: implement the VLM and scorer
 
@@ -180,6 +216,7 @@ def call_VLM_scorer(query, prompt, gt_img, metric, scorer_prms):
 
   # Constant relevance score
   relevance = relevance_scorer(query, image, device)
+  # aesthetic = aesthetic_scorer(image)
 
   # controlled score: such as aesthetic, final score is a combination of relevance and X
 
