@@ -160,7 +160,7 @@ def gen_meta_prompt(
 
   meta_prompt = ""
   if meta_prompt_type == "both_instructions_and_exemplars":
-    if optimizer_llm_name.lower() in {"gpt-3.5-turbo", "gpt-4"}:
+    if optimizer_llm_name.lower() in {"gpt-3.5-turbo", "gpt-4", "gpt-4o-mini"}:
       if instruction_pos == "A_begin":
         meta_prompt_old_instruction_part = (
             "Your task is to generate the answer starting sentence <Start>."
@@ -192,7 +192,7 @@ def gen_meta_prompt(
     # add QA pairs if few_shot_qa_pairs == True
     meta_prompt_exemplar_part = ""
     if few_shot_qa_pairs:
-      if optimizer_llm_name.lower() in {"gpt-3.5-turbo", "gpt-4"}:
+      if optimizer_llm_name.lower() in {"gpt-3.5-turbo", "gpt-4", "gpt-4o-mini"}:
         meta_prompt_exemplar_part += "Below are some problems.\n"
       else:
         assert optimizer_llm_name.lower() == "text-bison"
@@ -225,14 +225,14 @@ def gen_meta_prompt(
           elif instruction_pos == "Q_end":
             meta_prompt_exemplar_part += f"\ninput:\nQ: {question}\n<INS>\nA:"
           else:  # instruction_pos == "A_begin"
-            if optimizer_llm_name.lower() in {"gpt-3.5-turbo", "gpt-4"}:
+            if optimizer_llm_name.lower() in {"gpt-3.5-turbo", "gpt-4", "gpt-4o-mini"}:
               meta_prompt_exemplar_part += f"\nQ: {question}\nA: <Start>"
             else:
               assert optimizer_llm_name.lower() == "text-bison"
               meta_prompt_exemplar_part += f"\ninput:\nQ: {question}\nA: <INS>"
         else:  # when there're no "Q:" and "A:" in the prompt
           assert instruction_pos in {"Q_begin", "Q_end"}
-          if optimizer_llm_name.lower() in {"gpt-3.5-turbo", "gpt-4"}:
+          if optimizer_llm_name.lower() in {"gpt-3.5-turbo", "gpt-4", "gpt-4o-mini"}:
             if instruction_pos == "Q_begin":
               meta_prompt_exemplar_part += f"\nProblem:\n<INS>\n{question}\n"
             elif instruction_pos == "Q_end":
@@ -244,7 +244,7 @@ def gen_meta_prompt(
             elif instruction_pos == "Q_end":
               meta_prompt_exemplar_part += f"\ninput:\n{question}\n<INS>\n"
 
-        if optimizer_llm_name.lower() in {"gpt-3.5-turbo", "gpt-4"}:
+        if optimizer_llm_name.lower() in {"gpt-3.5-turbo", "gpt-4", "gpt-4o-mini"}:
           meta_prompt_exemplar_part += (
               f"\nGround truth answer:\n{true_answer}\n"
           )
@@ -268,7 +268,7 @@ def gen_meta_prompt(
     else:
       meta_prompt += meta_prompt_old_instruction_part
 
-    if optimizer_llm_name.lower() in {"gpt-3.5-turbo", "gpt-4"}:
+    if optimizer_llm_name.lower() in {"gpt-3.5-turbo", "gpt-4", "gpt-4o-mini"}:
       if instruction_pos == "A_begin":
         meta_prompt += (
             "\n\nGenerate a starting sentence that is different from all the"
@@ -743,7 +743,7 @@ def run_evolution(**kwargs):
       # is smaller than the total number of decodes in this step.
       if meta_prompt_type == "both_instructions_and_exemplars":
         raw_outputs = raw_outputs[:remaining_num_instructions_to_generate]
-        if optimizer_llm_name.lower() in {"gpt-3.5-turbo", "gpt-4"}:
+        if optimizer_llm_name.lower() in {"gpt-3.5-turbo", "gpt-4", "gpt-4o-mini"}:
           if instruction_pos == "A_begin":
             start_string = "<Start>"
             end_string = "</Start>"

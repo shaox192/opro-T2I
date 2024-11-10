@@ -25,7 +25,7 @@ Step 4: run
 
 ```
 python optimize_instructions.py \
-    --optimizer="gpt-3.5-turbo" --scorer="text-bison" \
+    --optimizer="gpt-4o-mini" --scorer="text-bison" \
     --instruction_pos="A_begin" --dataset="gsm8k" --task="train"
 ```
 
@@ -67,12 +67,16 @@ _OPENAI_API_KEY = flags.DEFINE_string(
     "openai_api_key", "", "The OpenAI API key."
 )
 
+_OPENAI_API_BASE = flags.DEFINE_string(
+    "openai_api_base", "", "The OpenAI API base."
+)
+
 _SCORER = flags.DEFINE_string(
     "scorer", "relevance", "metric of generated image scorer"
 )
 
 _OPTIMIZER = flags.DEFINE_string(
-    "optimizer", "gpt-3.5-turbo", "The name of the optimizer LLM."
+    "optimizer", "gpt-4o-mini", "The name of the optimizer LLM."
 )
 
 _DATASET = flags.DEFINE_string(
@@ -90,6 +94,7 @@ _PARAM_NUM_GEN_PER_SEARCH = flags.DEFINE_integer(
 
 def main(_):
   openai_api_key = _OPENAI_API_KEY.value
+  openai_api_base = _OPENAI_API_BASE.value
   scorer_name = _SCORER.value
   optimizer_llm_name = _OPTIMIZER.value
   dataset_name = _DATASET.value.lower()
@@ -108,14 +113,14 @@ def main(_):
   assert optimizer_llm_name in {
       "gpt-3.5-turbo",
       "gpt-4",
+      "gpt-4o-mini",
   }
 
   print(f"scorer: {scorer_name}, optimizer: {optimizer_llm_name}, dataset: {dataset_name}")
 
   # make sure the scorer and optimizer models are callable
-  if optimizer_llm_name in {"gpt-3.5-turbo", "gpt-4"}:
+  if optimizer_llm_name in {"gpt-3.5-turbo", "gpt-4", "gpt-4o-mini"}:
     assert openai_api_key, "The OpenAI API key must be provided."
-    openai.api_key = openai_api_key
   else:
     raise NotImplementedError("only openai models for now")
 
@@ -168,7 +173,10 @@ def main(_):
       )
 
   # ====================== optimizer model configs ============================
-  assert optimizer_llm_name in {"gpt-3.5-turbo", "gpt-4"}
+  assert optimizer_llm_name in {"gpt-3.5-turbo", "gpt-4", "gpt-4o-mini"}
+  
+  client = openai.OpenAI(api_key=openai_api_key, base_url=openai_api_base)
+  
   optimizer_gpt_max_decode_steps = 512
   optimizer_gpt_temperature = 1.0
 
@@ -194,6 +202,7 @@ def main(_):
 
   optimizer_test_output = call_optimizer_server_func(
       "Does the sun rise from the north? Just answer yes or no.",
+      client=client,
       temperature=1.0,
   )
   print(f"number of optimizer output decodes: {len(optimizer_test_output)}")
