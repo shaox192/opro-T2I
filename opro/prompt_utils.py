@@ -21,6 +21,8 @@ import openai
 import numpy as np
 from os.path import expanduser
 from urllib.request import urlretrieve
+import torchvision.transforms as transforms
+from torchmetrics.multimodal.clip_score import CLIPScore
 
 
 def call_openai_server_single_prompt(
@@ -98,36 +100,30 @@ def T2I(prompt, device):
     from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, DPMSolverMultistepScheduler
 
     # Uncomment if you are using GPU
-    model_id = "stabilityai/stable-diffusion-3.5-large"
-    pipe = StableDiffusion3Pipeline.from_pretrained(model_id, torch_dtype=torch.bfloat16)
+    # model_id = "stabilityai/stable-diffusion-3.5-large"
+    # pipe = StableDiffusion3Pipeline.from_pretrained(model_id, torch_dtype=torch.bfloat16)
 
     # Uncomment if you are using CPU
-    # model_id = "runwayml/stable-diffusion-v1-5"
-    # pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16)
+    model_id = "runwayml/stable-diffusion-v1-5"
+    pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float32)
 
     pipe = pipe.to(device)
 
     pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
     generator = torch.Generator(device).manual_seed(0)
     image = pipe(prompt, generator=generator, num_inference_steps=20).images[0]
-
     return image
 
 
-def relevance_scorer(prompt, image, device):
-    from transformers import CLIPProcessor, CLIPModel
-
-    model_id = "openai/clip-vit-base-patch32"
-    model = CLIPModel.from_pretrained(model_id).to(device)
-    processor = CLIPProcessor.from_pretrained(model_id)
-
-    inputs = processor(text=[prompt], images=image, return_tensors="pt", padding=True).to(device)
-    outputs = model(**inputs)
-    logits_per_image = outputs.logits_per_image
-    probs = logits_per_image.softmax(dim=1)
-    relevance = probs.detach().cpu().numpy()[0][0]
-
-    return relevance
+def relevance_scorer(prompt, image):
+    transform = transforms.Compose([
+        transforms.PILToTensor()
+    ])
+    image_tensor = transform(image)
+    metric = CLIPScore(model_name_or_path="openai/clip-vit-base-patch16")
+    score = metric(image_tensor, prompt)
+    # print("Relevance Score:", score.detach().round())
+    return float(score.detach().round())
 
 
 def get_aesthetic_model(clip_model="vit_l_14"):
@@ -162,19 +158,20 @@ def aesthetic_scorer(image, device='cpu'):
         image_features /= image_features.norm(dim=-1, keepdim=True)
         return aesthetic_model(image_features.float()).detach().item()
 
-def call_VLM_scorer(query, prompt, gt_img, metric, scorer_prms):
+def call_VLM_scorer(query, prompt, gt_img, step, i, metric, scorer_prms):
   #TODO: implement the VLM and scorer
 
-  device = "cuda:2"
+  device = "cpu"
 
   # T2I, currently--directly optimize rwritten query
   image = T2I(prompt, device)
+  image.save("output_image_" + str(step) + "_" + str(i) + ".png")
 
   # Constant relevance score
-  relevance = relevance_scorer(query, image, device)
-  # aesthetic = aesthetic_scorer(image)
+  relevance = relevance_scorer(query, image)
+  aesthetic = aesthetic_scorer(image)
 
   # controlled score: such as aesthetic, final score is a combination of relevance and X
 
-  return int(np.random.rand(1)[0] * 100)
+  return (relevance / 4 + aesthetic) / 2
 

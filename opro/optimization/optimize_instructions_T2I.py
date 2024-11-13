@@ -165,7 +165,7 @@ def main(_):
     pass
   else:
     raise NotImplementedError("only relevance and aesthetics scorers for now")
-  
+
   call_scorer_server_func = functools.partial(
         prompt_utils.call_VLM_scorer,
         metric = scorer_name,
@@ -174,9 +174,9 @@ def main(_):
 
   # ====================== optimizer model configs ============================
   assert optimizer_llm_name in {"gpt-3.5-turbo", "gpt-4", "gpt-4o-mini"}
-  
+
   client = openai.OpenAI(api_key=openai_api_key, base_url=openai_api_base)
-  
+
   optimizer_gpt_max_decode_steps = 512
   optimizer_gpt_temperature = 1.0
 
@@ -195,10 +195,10 @@ def main(_):
   # ====================== try calling the servers ============================
   print("\n======== testing the scorer and optimizer servers ===========")
   #TODO scorer test
-  scorer_test_output = call_scorer_server_func(
+  '''scorer_test_output = call_scorer_server_func(
       "orig_prompt_here", "img prompt here", "ground truth image here"
   )
-  print(f"scorer test output scores: {scorer_test_output}")
+  print(f"scorer test output scores: {scorer_test_output}")'''
 
   optimizer_test_output = call_optimizer_server_func(
       "Does the sun rise from the north? Just answer yes or no.",
@@ -218,7 +218,7 @@ def main(_):
 
   else:
     raise NotImplementedError("only mscoco datasets for now")
-  
+
   num_examples = len(raw_data)
 
   print(f"number of images: {num_examples}, number of initial prompts for image 1: {len(raw_data[0][1])}")

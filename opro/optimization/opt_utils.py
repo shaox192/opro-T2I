@@ -28,6 +28,7 @@ sys.path.insert(0, OPRO_ROOT_PATH)
 import numpy as np
 from opro.evaluation import eval_utils
 import pandas as pd
+import openai
 
 
 def extract_string_in_square_brackets(input_string):
@@ -1084,7 +1085,7 @@ def gen_meta_prompt_T2I(
   return meta_prompt
 
 
-def eval_prompts(orig_query, prompts_ls, gt_img, scorer, verbose=False):
+def eval_prompts(orig_query, prompts_ls, gt_img, scorer, verbose=False, step=-1):
   """
   
   orig_query: original query
@@ -1099,7 +1100,7 @@ def eval_prompts(orig_query, prompts_ls, gt_img, scorer, verbose=False):
     if verbose:
       print(f"computing the score of '{pro}' by prompting")
 
-    score = scorer(orig_query, pro, gt_img)  # TODO: query as the first parameter
+    score = scorer(orig_query, pro, gt_img, step, i)  # TODO: query as the first parameter
     scores.append(score)
 
   # average_score = np.average(scores)
@@ -1187,7 +1188,7 @@ def run_evolution_T2I(**kwargs):
     ###
 
     print("\n============== evaluating initial instructions ===============")
-    score_ls = eval_prompts(prompt_ls[0], prompt_ls, img, call_scorer_server_func, verbose)
+    score_ls = eval_prompts(prompt_ls[0], prompt_ls, img, call_scorer_server_func, verbose, -1)
 
     for j, p in enumerate(prompt_ls):
       old_instructions_and_scores.append((p, score_ls[j], -1))
@@ -1222,12 +1223,14 @@ def run_evolution_T2I(**kwargs):
       meta_prompts.append((meta_prompt, i_step))
       remaining_num_instructions_to_generate = num_generated_instructions_in_each_step
       generated_instructions_raw = []
+      client = openai.OpenAI(api_key="<your_openai_api_key>", base_url="<your_openai_api_base>")
       while remaining_num_instructions_to_generate > 0:
         optimizer_llm_input_text = meta_prompt
         # generate instructions
         # print(f"current temperature: {optimizer_llm_temperature_curr}")
         raw_outputs = call_optimizer_server_func(
             optimizer_llm_input_text,
+            client = client,
             temperature=optimizer_llm_temperature_curr,
         )
 
@@ -1272,7 +1275,7 @@ def run_evolution_T2I(**kwargs):
 
       # evaluate these newly generated prompts: 
       orig_query_ls = [triplet[0] for triplet in old_instructions_and_scores if triplet[-1] == -1]
-      score_ls = eval_prompts(orig_query_ls[0], to_evaluate_instructions, img, call_scorer_server_func, verbose)
+      score_ls = eval_prompts(orig_query_ls[0], to_evaluate_instructions, img, call_scorer_server_func, verbose, i_step)
       average_score = np.average(score_ls)
       print(f"Step {i_step}, avg_score: {average_score}")
 

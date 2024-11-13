@@ -19,8 +19,8 @@ python ./opro/optimization/optimize_instructions_T2I.py \
        --dataset="mscoco" \
        --param-num-search-steps 3 \
        --param-num-gen-per-search 4 \
-       --openai_api_key="<your_openai_api_key>"
-       --openai_api_base=""<your_openai_api_base>"
+       --openai_api_key="<your_openai_api_key>" \
+       --openai_api_base="<your_openai_api_base>"
 
 exit
 
