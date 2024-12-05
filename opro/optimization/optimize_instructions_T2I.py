@@ -80,7 +80,11 @@ _OPTIMIZER = flags.DEFINE_string(
 )
 
 _DATASET = flags.DEFINE_string(
-    "dataset", "mscoco", "The name of dataset to search for instructions on."
+    "dataset", "diffusionDB", "The name of dataset to search for instructions on. [mscoco, diffusionDB]"
+)
+
+_PARAM_SUBSET_SIZE = flags.DEFINE_integer(
+    "param-subset-size", 2, "how many images to use in the dataset (subsetting the 1k part-000001 diffusionDB dataset)"
 )
 
 _PARAM_NUM_SEARCH_STEPS = flags.DEFINE_integer(
@@ -98,13 +102,15 @@ def main(_):
   scorer_name = _SCORER.value
   optimizer_llm_name = _OPTIMIZER.value
   dataset_name = _DATASET.value.lower()
+  subset_size = _PARAM_SUBSET_SIZE.value
 
   num_generated_instructions_in_each_step = _PARAM_NUM_GEN_PER_SEARCH.value
   num_search_steps = _PARAM_NUM_SEARCH_STEPS.value
 
-  assert dataset_name in {
+  assert dataset_name in [
     "mscoco",
-  }, "The lower-case dataset name must be one of mscoco"
+    "diffusiondb",
+  ], f"The dataset name:{dataset_name} must be one of [mscoco, diffusionDB]"
 
   assert scorer_name in {
       "relevance",
@@ -126,6 +132,8 @@ def main(_):
 
   if dataset_name == "mscoco":
     root_data_folder_path = os.path.join(ROOT_DATA_FOLDER_PATH, "mscoco")
+  elif dataset_name == "diffusiondb":
+    root_data_folder_path = os.path.join(ROOT_DATA_FOLDER_PATH, "diffusionDB")
   else:
     raise NotImplementedError("only mscoco datasets for now")
 
@@ -214,14 +222,16 @@ def main(_):
   print("\n================ reading data in ==============")
   #TODO data loading
   if dataset_name == "mscoco":
-    raw_data = data_utils.load_mscoco_image_prompt_pairs(root_data_folder_path, )
+    raw_data = data_utils.load_mscoco_image_prompt_pairs(root_data_folder_path)
+  elif dataset_name == "diffusiondb":
+    raw_data = data_utils.load_diffusionDB_image_prompt_pairs(root_data_folder_path, prms={"subset_size": subset_size})
 
   else:
-    raise NotImplementedError("only mscoco datasets for now")
+    raise NotImplementedError("only mscoco, diffusionDB datasets for now")
 
   num_examples = len(raw_data)
-
   print(f"number of images: {num_examples}, number of initial prompts for image 1: {len(raw_data[0][1])}")
+
 
   # ========== set other optimization experiment hyperparameters ==============
 

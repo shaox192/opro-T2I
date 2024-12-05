@@ -7,3 +7,5 @@ METADATA
 .vscode
 *.egg-info
 __pycache__/
+.idea/
+*.webp
