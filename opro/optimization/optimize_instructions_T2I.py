@@ -83,6 +83,10 @@ _DATASET = flags.DEFINE_string(
     "dataset", "diffusionDB", "The name of dataset to search for instructions on. [mscoco, diffusionDB]"
 )
 
+_PARAM_AGGREGATE_SCORES = flags.DEFINE_bool(
+    "param-aggregate-scores", True, "whether to aggregate scores for each image, or separte relavance and other scores"
+)
+
 _PARAM_SUBSET_SIZE = flags.DEFINE_integer(
     "param-subset-size", 2, "how many images to use in the dataset (subsetting the 1k part-000001 diffusionDB dataset)"
 )
@@ -102,8 +106,9 @@ def main(_):
   scorer_name = _SCORER.value
   optimizer_llm_name = _OPTIMIZER.value
   dataset_name = _DATASET.value.lower()
-  subset_size = _PARAM_SUBSET_SIZE.value
 
+  subset_size = _PARAM_SUBSET_SIZE.value
+  aggregate_scores = _PARAM_AGGREGATE_SCORES.value
   num_generated_instructions_in_each_step = _PARAM_NUM_GEN_PER_SEARCH.value
   num_search_steps = _PARAM_NUM_SEARCH_STEPS.value
 
@@ -208,14 +213,14 @@ def main(_):
   )
   print(f"scorer test output scores: {scorer_test_output}")'''
 
-  optimizer_test_output = call_optimizer_server_func(
-      "Does the sun rise from the north? Just answer yes or no.",
-      client=client,
-      temperature=1.0,
-  )
-  print(f"number of optimizer output decodes: {len(optimizer_test_output)}")
-  print(f"optimizer test output: {optimizer_test_output}")
-  print("Finished testing the servers.")
+  # optimizer_test_output = call_optimizer_server_func(
+  #     "Does the sun rise from the north? Just answer yes or no.",
+  #     client=client,
+  #     temperature=1.0,
+  # )
+  # print(f"number of optimizer output decodes: {len(optimizer_test_output)}")
+  # print(f"optimizer test output: {optimizer_test_output}")
+  # print("Finished testing the servers.")
 
 
   # ====================== read data ============================
@@ -250,6 +255,7 @@ def main(_):
 
   # ===================== run prompt optimization ======================
   evolution_kwargs = {
+      "llm_client": client,
       "num_search_steps": num_search_steps,
       "old_instruction_score_threshold": old_instruction_score_threshold,
       "optimizer_llm_dict": optimizer_llm_dict,
@@ -265,7 +271,8 @@ def main(_):
           num_generated_instructions_in_each_step
       ),
       "save_folder": save_folder,
-      "result_by_image_folder":result_by_image_folder
+      "result_by_image_folder":result_by_image_folder,
+      "aggregate_scores": aggregate_scores,
   }
 
   opt_utils.run_evolution_T2I(**evolution_kwargs)
