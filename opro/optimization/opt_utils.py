@@ -1143,7 +1143,7 @@ def eval_prompts(orig_query, prompts_ls, gt_img, scorer, verbose=False, step=-1)
     if verbose:
       print(f"computing the score of '{pro}' by prompting")
 
-    score_dict, img = scorer(orig_query, pro, gt_img, step, i)  # TODO: query as the first parameter
+    score_dict, img = scorer(orig_query, pro)  # TODO: query as the first parameter
     scores.append(score_dict)
     gen_img_ls.append(img)
 
@@ -1252,6 +1252,7 @@ def run_evolution_T2I(**kwargs):
 
     print("\n============== evaluating initial instructions ===============")
     score_ls, bl_gen_img_ls = eval_prompts(prompt_ls[0], prompt_ls, img, call_scorer_server_func, verbose, -1)
+
     save_img(bl_gen_img_ls, -1, im_id, result_by_image_folder)
 
     for j, p in enumerate(prompt_ls):

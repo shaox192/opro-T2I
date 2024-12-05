@@ -45,6 +45,7 @@ import datetime
 import functools
 import os
 import sys
+import torch
 
 OPRO_ROOT_PATH = os.path.dirname(
     os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
@@ -179,10 +180,12 @@ def main(_):
   else:
     raise NotImplementedError("only relevance and aesthetics scorers for now")
 
+  device = "cuda" if torch.cuda.is_available() else "cpu"
+  print(f"--> Using device: {device} <--")
+
   call_scorer_server_func = functools.partial(
         prompt_utils.call_VLM_scorer,
-        metric = scorer_name,
-        scorer_prms = scorer_prms,
+        device = device,
       )
 
   # ====================== optimizer model configs ============================
@@ -213,14 +216,14 @@ def main(_):
   )
   print(f"scorer test output scores: {scorer_test_output}")'''
 
-  # optimizer_test_output = call_optimizer_server_func(
-  #     "Does the sun rise from the north? Just answer yes or no.",
-  #     client=client,
-  #     temperature=1.0,
-  # )
-  # print(f"number of optimizer output decodes: {len(optimizer_test_output)}")
-  # print(f"optimizer test output: {optimizer_test_output}")
-  # print("Finished testing the servers.")
+  optimizer_test_output = call_optimizer_server_func(
+      "Does the sun rise from the north? Just answer yes or no.",
+      client=client,
+      temperature=1.0,
+  )
+  print(f"number of optimizer output decodes: {len(optimizer_test_output)}")
+  print(f"optimizer test output: {optimizer_test_output}")
+  print("Finished testing the servers.")
 
 
   # ====================== read data ============================
