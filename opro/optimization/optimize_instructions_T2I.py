@@ -181,7 +181,7 @@ def main(_):
     raise NotImplementedError("only relevance and aesthetics scorers for now")
 
   device = "cuda" if torch.cuda.is_available() else "cpu"
-  print(f"--> Using device: {device} <--")
+  print(f"--> Using device: {device} <--", flush=True)
 
   call_scorer_server_func = functools.partial(
         prompt_utils.call_VLM_scorer,
@@ -221,9 +221,9 @@ def main(_):
       client=client,
       temperature=1.0,
   )
-  print(f"number of optimizer output decodes: {len(optimizer_test_output)}")
-  print(f"optimizer test output: {optimizer_test_output}")
-  print("Finished testing the servers.")
+  print(f"number of optimizer output decodes: {len(optimizer_test_output)}", flush=True)
+  print(f"optimizer test output: {optimizer_test_output}", flush=True)
+  print("Finished testing the servers.", flush=True)
 
 
   # ====================== read data ============================
@@ -238,7 +238,7 @@ def main(_):
     raise NotImplementedError("only mscoco, diffusionDB datasets for now")
 
   num_examples = len(raw_data)
-  print(f"number of images: {num_examples}, number of initial prompts for image 1: {len(raw_data[0][1])}")
+  print(f"number of images: {num_examples}, number of initial prompts for image 1: {len(raw_data[0][1])}", flush=True)
 
 
   # ========== set other optimization experiment hyperparameters ==============
