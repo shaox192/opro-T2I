@@ -84,6 +84,10 @@ _DATASET = flags.DEFINE_string(
     "dataset", "diffusionDB", "The name of dataset to search for instructions on. [mscoco, diffusionDB]"
 )
 
+_SAVE_DIR = flags.DEFINE_string(
+    "save-dir", ".", "directory to save data"
+)
+
 _PARAM_AGGREGATE_SCORES = flags.DEFINE_bool(
     "param-aggregate-scores", True, "whether to aggregate scores for each image, or separte relavance and other scores"
 )
@@ -107,6 +111,7 @@ def main(_):
   scorer_name = _SCORER.value
   optimizer_llm_name = _OPTIMIZER.value
   dataset_name = _DATASET.value.lower()
+  save_dir = _SAVE_DIR.value
 
   subset_size = _PARAM_SUBSET_SIZE.value
   aggregate_scores = _PARAM_AGGREGATE_SCORES.value
@@ -151,17 +156,17 @@ def main(_):
   )
 
   save_folder = os.path.join(
-      OPRO_ROOT_PATH,
+      save_dir,
       "outputs",
       "optimization-results",
-      f"{dataset_name.upper()}-score-{scorer_name}-opt-{optimizer_llm_name}-{datetime_str}/",
+      f"{dataset_name.upper()}-opt-{optimizer_llm_name}-aggregate-{aggregate_scores}-{datetime_str}/",
   )
   result_by_image_folder = os.path.join(
       save_folder, "result_by_image"
   )
   os.makedirs(result_by_image_folder)
   print(f"result directory:\n{save_folder}")
-
+  exit(0)
   # ====================== scorer model configs ==============================
   # difference between num_decodes and batch_size:
   # - num_decodes: how many outputs we actually want for each input
