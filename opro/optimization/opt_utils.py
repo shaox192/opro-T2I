@@ -1265,14 +1265,14 @@ def run_evolution_T2I(**kwargs):
 
       old_instructions_and_scores.append((p, curr_sc, -1))
 
-    print(old_instructions_and_scores)
+    # print(old_instructions_and_scores)
 
     # evolution
     print("\n============== Optimizing ===============")
     for i_step in range(num_search_steps):
       print(f"\n--Step {i_step}/{num_search_steps}--")
-      if not i_step % 2:
-        print(f"*old_instructions_and_scores: {old_instructions_and_scores}")
+      # if not i_step % 10:
+      #   print(f"*old_instructions_and_scores: {old_instructions_and_scores}")
 
       if optimizer_llm_temperature_schedule == "linear_increase":
         optimizer_llm_temperature_curr = (
@@ -1293,9 +1293,10 @@ def run_evolution_T2I(**kwargs):
           max_num_instructions=max_num_instructions,
       )
 
-      print("\n**************************************************")
-      print(f"*meta_prompt: \n\n{meta_prompt}\n")
-      print("**************************************************\n", flush=True)
+      if not i_step % 5:
+        print("\n**************************************************")
+        print(f"*meta_prompt: \n\n{meta_prompt}\n")
+        print("**************************************************\n", flush=True)
 
       meta_prompts.append((meta_prompt, i_step))
       remaining_num_instructions_to_generate = num_generated_instructions_in_each_step
@@ -1327,8 +1328,7 @@ def run_evolution_T2I(**kwargs):
       generated_instructions_raw = list(
           map(eval_utils.polish_sentence, generated_instructions_raw)
       )
-      print(f"\n{len(generated_instructions_raw)} initially generated instructions in {time.time() - tik :.3f} seconds, e.g.: \n"
-            f"{generated_instructions_raw[0]}\n", flush=True)
+      print(f"\n * generated {len(generated_instructions_raw)} instructions in {time.time() - tik :.3f} seconds", flush=True)
 
       # do not evaluate old instructions again
       generated_instructions = []  # the new instructions generated in this step
@@ -1346,15 +1346,15 @@ def run_evolution_T2I(**kwargs):
 
       # get rid of instructions that are too long
       to_evaluate_instructions = []
-      for instruction in generated_instructions:
+      for iii, instruction in enumerate(generated_instructions):
         if len(instruction) > 1000:
-          print(f"Step {i_step}, instruction: {instruction}, too long, skipped")
+          print(f"Step {i_step}, {iii}-th instruction, too long, skipped")
           continue
         to_evaluate_instructions.append(instruction)
       print(f"\nnumber of to-evaluate generated instructions: {len(to_evaluate_instructions)}\n")
       if len(to_evaluate_instructions) == 0:
         continue
-      
+
       # evaluate these newly generated prompts: 
       orig_query_ls = [triplet[0] for triplet in old_instructions_and_scores if triplet[-1] == -1]
       score_ls, opt_gen_img_ls = eval_prompts(orig_query_ls[0], to_evaluate_instructions, img, call_scorer_server_func, verbose, i_step)
