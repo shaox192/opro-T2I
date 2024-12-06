@@ -29,7 +29,8 @@ sys.path.insert(0, OPRO_ROOT_PATH)
 import numpy as np
 from opro.evaluation import eval_utils
 import pandas as pd
-import openai
+# import openai
+import time
 
 
 def extract_string_in_square_brackets(input_string):
@@ -1251,7 +1252,9 @@ def run_evolution_T2I(**kwargs):
     ###
 
     print("\n============== evaluating initial instructions ===============")
+    tik = time.time()
     score_ls, bl_gen_img_ls = eval_prompts(prompt_ls[0], prompt_ls, img, call_scorer_server_func, verbose, -1)
+    print(f"Time taken for initial evaluation {len(prompt_ls)} prompts: {time.time() - tik :.3f} seconds")
 
     save_img(bl_gen_img_ls, -1, im_id, result_by_image_folder)
 
@@ -1296,6 +1299,7 @@ def run_evolution_T2I(**kwargs):
       remaining_num_instructions_to_generate = num_generated_instructions_in_each_step
       generated_instructions_raw = []
       # client = openai.OpenAI(api_key="<your_openai_api_key>", base_url="<your_openai_api_base>")
+      tik = time.time()
       while remaining_num_instructions_to_generate > 0:
         optimizer_llm_input_text = meta_prompt
         # generate instructions
@@ -1321,7 +1325,8 @@ def run_evolution_T2I(**kwargs):
       generated_instructions_raw = list(
           map(eval_utils.polish_sentence, generated_instructions_raw)
       )
-      print(f"\ninitially generated instructions: {generated_instructions_raw}\n")
+      print(f"\n{len(generated_instructions_raw)} initially generated instructions in {time.time() - tik :.3f} seconds, e.g.: \n"
+            f"{generated_instructions_raw[0]}\n")
 
       # do not evaluate old instructions again
       generated_instructions = []  # the new instructions generated in this step
