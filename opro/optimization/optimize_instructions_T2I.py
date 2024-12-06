@@ -179,9 +179,9 @@ def main(_):
   else:
       # Uncomment if you are using GPU
       model_id = "stabilityai/stable-diffusion-3.5-medium"
-      generator_pipe = StableDiffusion3Pipeline.from_pretrained(model_id, torch_dtype=torch.bfloat16)
+      generator_pipe = StableDiffusion3Pipeline.from_pretrained(model_id, torch_dtype=torch.float16) # a40 does not support bf16
   generator_pipe = generator_pipe.to(device)
-  generator_pipe.scheduler = DPMSolverMultistepScheduler.from_config(generator_pipe.scheduler.config)
+  # generator_pipe.scheduler = DPMSolverMultistepScheduler.from_config(generator_pipe.scheduler.config)
 
   # ====================== scorer model configs ==============================
   # difference between num_decodes and batch_size:

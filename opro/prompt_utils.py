@@ -104,7 +104,7 @@ def T2I(prompt, generator_pipe, device):
         num_steps = 1
     else:
         # Uncomment if you are using GPU
-        num_steps = 40
+        num_steps = 25
 
     generator = torch.Generator(device).manual_seed(0)
     image = generator_pipe(prompt, generator=generator, num_inference_steps=num_steps).images[0]
