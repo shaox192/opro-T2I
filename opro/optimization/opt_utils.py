@@ -1351,8 +1351,10 @@ def run_evolution_T2I(**kwargs):
           print(f"Step {i_step}, instruction: {instruction}, too long, skipped")
           continue
         to_evaluate_instructions.append(instruction)
-      print(f"\nto-evaluate generated instructions: {to_evaluate_instructions}\n")
-
+      print(f"\nnumber of to-evaluate generated instructions: {len(to_evaluate_instructions)}\n")
+      if len(to_evaluate_instructions) == 0:
+        continue
+      
       # evaluate these newly generated prompts: 
       orig_query_ls = [triplet[0] for triplet in old_instructions_and_scores if triplet[-1] == -1]
       score_ls, opt_gen_img_ls = eval_prompts(orig_query_ls[0], to_evaluate_instructions, img, call_scorer_server_func, verbose, i_step)
