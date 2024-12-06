@@ -166,7 +166,7 @@ def main(_):
   )
   os.makedirs(result_by_image_folder)
   print(f"result directory:\n{save_folder}")
-  exit(0)
+
   # ====================== scorer model configs ==============================
   # difference between num_decodes and batch_size:
   # - num_decodes: how many outputs we actually want for each input
