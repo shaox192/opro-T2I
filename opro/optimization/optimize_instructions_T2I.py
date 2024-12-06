@@ -55,6 +55,8 @@ sys.path.insert(0, OPRO_ROOT_PATH)
 from absl import app
 from absl import flags
 # import google.generativeai as palm
+from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, DPMSolverMultistepScheduler
+
 import numpy as np
 import openai
 from opro import prompt_utils
@@ -103,6 +105,9 @@ _PARAM_NUM_SEARCH_STEPS = flags.DEFINE_integer(
 _PARAM_NUM_GEN_PER_SEARCH = flags.DEFINE_integer(
     "param-num-gen-per-search", 6, "number of prompts to be generated in each evolution step"
 )
+
+device = "cuda" if torch.cuda.is_available() else "cpu"
+print(f"--> Using device: {device} <--", flush=True)
 
 
 def main(_):
@@ -167,6 +172,17 @@ def main(_):
   os.makedirs(result_by_image_folder)
   print(f"result directory:\n{save_folder}")
 
+  # ====================== diffusion model to generate image ==================
+  if device == "cpu":
+      model_id = "OFA-Sys/small-stable-diffusion-v0" # "runwayml/stable-diffusion-v1-5"
+      generator_pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float32)
+  else:
+      # Uncomment if you are using GPU
+      model_id = "stabilityai/stable-diffusion-3.5-medium"
+      generator_pipe = StableDiffusion3Pipeline.from_pretrained(model_id, torch_dtype=torch.bfloat16)
+  generator_pipe = generator_pipe.to(device)
+  generator_pipe.scheduler = DPMSolverMultistepScheduler.from_config(generator_pipe.scheduler.config)
+
   # ====================== scorer model configs ==============================
   # difference between num_decodes and batch_size:
   # - num_decodes: how many outputs we actually want for each input
@@ -185,11 +201,9 @@ def main(_):
   else:
     raise NotImplementedError("only relevance and aesthetics scorers for now")
 
-  device = "cuda" if torch.cuda.is_available() else "cpu"
-  print(f"--> Using device: {device} <--", flush=True)
-
   call_scorer_server_func = functools.partial(
         prompt_utils.call_VLM_scorer,
+        generator_pipe = generator_pipe,
         device = device,
       )
 

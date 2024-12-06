@@ -98,26 +98,16 @@ def call_palm_server_from_cloud(
     )
 
 
-def T2I(prompt, device):
-    import torch
-    from diffusers import StableDiffusionPipeline, StableDiffusion3Pipeline, DPMSolverMultistepScheduler
-
+def T2I(prompt, generator_pipe, device):
     # Uncomment if you are using CPU
     if device == "cpu":
-        model_id = "OFA-Sys/small-stable-diffusion-v0" # "runwayml/stable-diffusion-v1-5"
-        pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float32)
         num_steps = 1
     else:
         # Uncomment if you are using GPU
-        model_id = "stabilityai/stable-diffusion-3.5-medium"
-        pipe = StableDiffusion3Pipeline.from_pretrained(model_id, torch_dtype=torch.bfloat16)
         num_steps = 20
 
-    pipe = pipe.to(device)
-
-    pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
     generator = torch.Generator(device).manual_seed(0)
-    image = pipe(prompt, generator=generator, num_inference_steps=num_steps).images[0]
+    image = generator_pipe(prompt, generator=generator, num_inference_steps=num_steps).images[0]
     return image
 
 
@@ -166,14 +156,11 @@ def aesthetic_scorer(image, device):
         image_features /= image_features.norm(dim=-1, keepdim=True)
         return aesthetic_model(image_features.float()).detach().item()
 
-def call_VLM_scorer(query, prompt, device) -> Tuple[Dict[str, float], PIL.Image.Image]:
+def call_VLM_scorer(query, prompt, generator_pipe, device) -> Tuple[Dict[str, float], PIL.Image.Image]:
   #TODO: implement the VLM and scorer
 
-#   device = "cpu"
-
   # T2I, currently--directly optimize rwritten query
-  image = T2I(prompt, device)
-  # image.save("output_image_" + str(step) + "_" + str(i) + ".png")
+  image = T2I(prompt, generator_pipe, device)
 
   # Constant relevance score
   relevance = relevance_scorer(query, image, device)

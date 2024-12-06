@@ -87,7 +87,7 @@ def gen_ins_and_score_pairs_substr(
         else:
           score_to_show = _bucketize_float(score, num_score_buckets)
         old_instructions_and_scores_str += (
-            f"\ntext:\n{instruction}\n\n score:\n {score_to_show}\n"
+            f"\ntext:\n{instruction}\n\nscore:\n{score_to_show}\n"
         )
     else:
       rel_score = score_dict["relevance"]
@@ -104,7 +104,7 @@ def gen_ins_and_score_pairs_substr(
           rel_score_to_show = _bucketize_float(rel_score, num_score_buckets)
           aes_score_to_show = _bucketize_float(aes_score, num_score_buckets)
       old_instructions_and_scores_str += (
-            f"\ntext:\n{instruction}\n\n relevance score:\n {rel_score_to_show}\n aesthetics score:\n {aes_score_to_show}\n"
+            f"\ntext:\n{instruction}\n\nrelevance score:\n {rel_score_to_show}\naesthetics score:\n {aes_score_to_show}\n"
         )
       
   if return_str_only:
@@ -1293,7 +1293,9 @@ def run_evolution_T2I(**kwargs):
           max_num_instructions=max_num_instructions,
       )
 
-      print(f"\n*meta_prompt: \n\n{meta_prompt}\n", flush=True)
+      print("\n**************************************************")
+      print(f"*meta_prompt: \n\n{meta_prompt}\n")
+      print("**************************************************\n", flush=True)
 
       meta_prompts.append((meta_prompt, i_step))
       remaining_num_instructions_to_generate = num_generated_instructions_in_each_step
@@ -1331,14 +1333,15 @@ def run_evolution_T2I(**kwargs):
       # do not evaluate old instructions again
       generated_instructions = []  # the new instructions generated in this step
       for ins in generated_instructions_raw:
-        ins_md5_hashstring = eval_utils.instruction_to_filename(
-            ins, md5_hashing=True
-        )
-        if ins_md5_hashstring not in old_instruction_md5_hashstrings_set:
-          generated_instructions.append(ins)
-          old_instruction_md5_hashstrings_set.add(ins_md5_hashstring)
-        else:
-          print(f"already evaluated '{ins}' previously")
+        generated_instructions.append(ins)
+        # ins_md5_hashstring = eval_utils.instruction_to_filename(
+        #     ins, md5_hashing=True
+        # )
+        # if ins_md5_hashstring not in old_instruction_md5_hashstrings_set:
+        #   generated_instructions.append(ins)
+        #   old_instruction_md5_hashstrings_set.add(ins_md5_hashstring)
+        # else:
+        #   print(f"already evaluated '{ins}' previously")
       generated_instructions = list(set(generated_instructions))
 
       # get rid of instructions that are too long
