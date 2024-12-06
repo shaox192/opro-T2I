@@ -27,14 +27,14 @@ def load_diffusionDB_image_prompt_pairs(data_folder_pth, prms=None):
     if len(prompt_img_pairs) >= prms["subset_size"]:
       break
 
-    img_pth = os.path.join(data_folder_pth, img_part_pth, k)
-    if not os.path.exists(img_pth):
-      print(f"image {k} not found, skipping")
-      continue
-    img = PIL.Image.open(img_pth)
+    # img_pth = os.path.join(data_folder_pth, img_part_pth, k)
+    # if not os.path.exists(img_pth):
+    #   print(f"image {k} not found, skipping")
+    #   continue
+    # img = PIL.Image.open(img_pth)
     id = k.split(".")[0]
     prompt = [v["p"]]  # diffusion db only has 1 prompt per image
-    prompt_img_pairs.append((id, prompt, img))
+    prompt_img_pairs.append((id, prompt, None))
   
   return prompt_img_pairs
 

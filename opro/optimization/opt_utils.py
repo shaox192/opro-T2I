@@ -1270,7 +1270,7 @@ def run_evolution_T2I(**kwargs):
     # evolution
     print("\n============== Optimizing ===============")
     for i_step in range(num_search_steps):
-      print(f"\n--Step {i_step}/{num_search_steps}--")
+      print(f"\n--Step {i_step + 1}/{num_search_steps}--")
       # if not i_step % 10:
       #   print(f"*old_instructions_and_scores: {old_instructions_and_scores}")
 

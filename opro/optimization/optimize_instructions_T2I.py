@@ -46,6 +46,7 @@ import functools
 import os
 import sys
 import torch
+import time
 
 OPRO_ROOT_PATH = os.path.dirname(
     os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
@@ -297,7 +298,9 @@ def main(_):
       "aggregate_scores": aggregate_scores,
   }
 
+  tik = time.time()
   opt_utils.run_evolution_T2I(**evolution_kwargs)
+  print(f"TOTAL Time taken: {time.time() - tik} seconds", flush=True)
 
 
 if __name__ == "__main__":
