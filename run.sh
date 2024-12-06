@@ -18,12 +18,12 @@ python ./opro/optimization/optimize_instructions_T2I.py \
        --scorer="relevance" \
        --dataset="diffusionDB" \
        --save-dir="." \
-       --param-aggregate-scores=False \
-       --param-subset-size 2 \
-       --param-num-search-steps 3 \
-       --param-num-gen-per-search 2 \
-       --openai_api_key="sk-BOa6EI5QKURnRvb574A86b1b24Fc445dB95eDaEe82F7C9F9" \
-       --openai_api_base="https://api.fantasyfinal.cn/v1"
+       --param-aggregate-scores=True \
+       --param-subset-size 20 \
+       --param-num-search-steps 20 \
+       --param-num-gen-per-search 3 \
+       --openai_api_key="<>" \
+       --openai_api_base="<>"
 
 exit
 
