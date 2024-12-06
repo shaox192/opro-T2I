@@ -127,6 +127,7 @@ def relevance_scorer(prompt, image, device):
     ])
     image_tensor = transform(image)
     metric = CLIPScore(model_name_or_path="openai/clip-vit-base-patch16")
+    image_tensor = image_tensor.to(device)
     metric = metric.to(device)
     score = metric(image_tensor, prompt)
     # print("Relevance Score:", score.detach().round())
