@@ -22,11 +22,15 @@ def load_diffusionDB_image_prompt_pairs(data_folder_pth, prms=None):
   with open(os.path.join(data_folder_pth, img_part_pth, "part-000001.json"), 'r') as file:
       data = json.load(file)
 
+  np.random.seed(0)
+  idx_ls = np.random.choice(len(data), prms["subset_size"], replace=False)
+
   prompt_img_pairs = []
   for i, (k, v) in enumerate(data.items()):
-    if len(prompt_img_pairs) >= prms["subset_size"]:
-      break
-
+    # if len(prompt_img_pairs) >= prms["subset_size"]:
+    #   break
+    if i not in idx_ls:
+      continue
     # img_pth = os.path.join(data_folder_pth, img_part_pth, k)
     # if not os.path.exists(img_pth):
     #   print(f"image {k} not found, skipping")
@@ -35,7 +39,7 @@ def load_diffusionDB_image_prompt_pairs(data_folder_pth, prms=None):
     id = k.split(".")[0]
     prompt = [v["p"]]  # diffusion db only has 1 prompt per image
     prompt_img_pairs.append((id, prompt, None))
-  
+    
   return prompt_img_pairs
 
 

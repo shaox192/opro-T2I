@@ -271,7 +271,7 @@ def main(_):
 
   optimizer_llm_temperature = optimizer_llm_dict["temperature"]
 
-  max_num_instructions = 20  # the maximum number of instructions and scores in the meta-prompt
+  max_num_instructions = 25  # the maximum number of instructions and scores in the meta-prompt
 
   # The number of buckets when converting scores to integers in the meta-prompt.
   # num_score_buckets = 100

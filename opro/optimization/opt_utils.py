@@ -1072,17 +1072,18 @@ META_INSTRUCTION = [
     " where higher scores indicate better quality.\n\n", 
 
     "\n\nWrite your new text that is different from the old ones and"
-    " has a score as high as possible. Write the text in square brackets."
+    " has a score as high as possible. Avoid overly long texts. "
+    "Write the text in square brackets."
   ],
   [
-    "I have some texts along with their corresponding scores."
-    " where higher scores indicate better quality. \n\n", 
+    "I have some texts, each accompanied by two scores: a relevance score and an aesthetics score."
+    " Higher scores indicate better quality for their respective criteria. \n\n", 
     
-   "\n\nWrite your new text that is different from the old ones and"
-    " has scores as high as possible. Importantly, Relevance score is"
-    "the most important and should be prioritized, given this guarantee, improve the aesthetics score"
+   "\n\nWrite your new text that is different from the old ones to"
+    " maximize both the relevance score and the aesthetics score simultaneously. "
+    "Avoid overly long texts. "
     "Write the text in square brackets."
-],
+  ],
 ]
   
 
@@ -1155,7 +1156,9 @@ def eval_prompts(orig_query, prompts_ls, gt_img, scorer, verbose=False, step=-1)
 
 
 def calc_aggregated_score(scores_dict):
-  return (scores_dict["relevance"] / 4 + scores_dict["aesthetics"]) / 2
+  tot_score = (scores_dict["relevance"] / 4 + scores_dict["aesthetics"]) / 2
+  tot_score = np.exp(0.7 * tot_score)
+  return tot_score
 
 def save_img(img_ls, step_i, img_id, save_dir):
   byte_imgs_ls = []
@@ -1293,7 +1296,7 @@ def run_evolution_T2I(**kwargs):
           max_num_instructions=max_num_instructions,
       )
 
-      if not i_step % 5:
+      if not i_step % 2:
         print("\n**************************************************")
         print(f"*meta_prompt: \n\n{meta_prompt}\n")
         print("**************************************************\n", flush=True)
@@ -1343,13 +1346,17 @@ def run_evolution_T2I(**kwargs):
         # else:
         #   print(f"already evaluated '{ins}' previously")
       generated_instructions = list(set(generated_instructions))
-
+      # print(generated_instructions)
+      
       # get rid of instructions that are too long
       to_evaluate_instructions = []
       for iii, instruction in enumerate(generated_instructions):
         if len(instruction) > 1000:
           print(f"Step {i_step}, {iii}-th instruction, too long, skipped")
           continue
+        if instruction.startswith("Text: " or "text: "):
+          instruction = instruction[len("Text: "):]
+
         to_evaluate_instructions.append(instruction)
       print(f"\nnumber of to-evaluate generated instructions: {len(to_evaluate_instructions)}\n")
       if len(to_evaluate_instructions) == 0:
