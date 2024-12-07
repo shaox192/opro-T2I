@@ -12,18 +12,21 @@ which python
 #        --palm_api_key="<your_palm_api_key>" \
 #        --openai_api_key="<your_openai_api_key>"
 
+AGGREGATE_SCORES=True
 
 python ./opro/optimization/optimize_instructions_T2I.py \
        --optimizer="gpt-4o-mini" \
        --scorer="relevance" \
        --dataset="diffusionDB" \
        --save-dir="." \
-       --param-aggregate-scores=True \
+       --param-aggregate-scores=$AGGREGATE_SCORES \
        --param-subset-size 20 \
-       --param-num-search-steps 20 \
+       --param-num-search-steps 10 \
        --param-num-gen-per-search 3 \
        --openai_api_key="<>" \
-       --openai_api_base="<>"
+       --openai_api_base="<>" \
+       > out-agg-${AGGREGATE_SCORES}.txt
+
 
 exit
 
