@@ -12,7 +12,7 @@ which python
 #        --palm_api_key="<your_palm_api_key>" \
 #        --openai_api_key="<your_openai_api_key>"
 
-AGGREGATE_SCORES=True
+AGGREGATE_SCORES=False
 
 python ./opro/optimization/optimize_instructions_T2I.py \
        --optimizer="gpt-4o-mini" \
