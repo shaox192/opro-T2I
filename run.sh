@@ -12,7 +12,8 @@ which python
 #        --palm_api_key="<your_palm_api_key>" \
 #        --openai_api_key="<your_openai_api_key>"
 
-AGGREGATE_SCORES=False
+AGGREGATE_SCORES=True
+MULTI_MODAL=True
 
 python ./opro/optimization/optimize_instructions_T2I.py \
        --optimizer="gpt-4o-mini" \
@@ -20,13 +21,14 @@ python ./opro/optimization/optimize_instructions_T2I.py \
        --dataset="diffusionDB" \
        --save-dir="." \
        --param-aggregate-scores=$AGGREGATE_SCORES \
-       --param-subset-size 20 \
+       --param-multi-modal=$MULTI_MODAL \
+       --param-subset-size 1 \
        --param-num-search-steps 10 \
        --param-num-gen-per-search 3 \
        --openai_api_key="<>" \
-       --openai_api_base="<>" \
-       > out-agg-${AGGREGATE_SCORES}.txt
+       > out-agg-${AGGREGATE_SCORES}-multimodal-${MULTI_MODAL}.txt
 
+#        --openai_api_base="<>" \
 
 exit
 
