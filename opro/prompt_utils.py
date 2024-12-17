@@ -18,6 +18,9 @@ import torch.nn as nn
 import time
 from typing import Tuple, Dict
 import PIL
+import base64
+from io import BytesIO
+
 
 # import google.generativeai as palm
 import openai
@@ -59,6 +62,38 @@ def call_openai_server_func(
   for input_str in inputs:
     output = call_openai_server_single_prompt(
         input_str,
+        client,
+        model=model,
+        max_decode_steps=max_decode_steps,
+        temperature=temperature,
+    )
+    outputs.append(output)
+  return outputs
+
+
+def call_openai_server_func_multi_modal(
+    inputs, client, model="gpt-4o-mini", max_decode_steps=20, temperature=0.8
+):
+  """
+  The function to call OpenAI server with a list of multiple modal inputs.
+  inputs: list of message contents: [[
+        {
+          "type": "text",
+          "text": "What is in this image?",
+        },
+        {
+          "type": "image_url",
+          "image_url": {
+            "url":  f"data:image/jpeg;base64,{base64_image}"
+          },
+        },
+      ],]
+  """
+
+  outputs = []
+  for input_content in inputs:
+    output = call_openai_server_single_prompt(
+        input_content,
         client,
         model=model,
         max_decode_steps=max_decode_steps,
@@ -171,4 +206,17 @@ def call_VLM_scorer(query, prompt, generator_pipe, device) -> Tuple[Dict[str, fl
   scores = {"relevance": relevance, "aesthetics": aesthetic}
 
   return scores, image
+
+
+
+def encode_image(img, resize=False):
+  if img is str:  # image path
+    with open(img, "rb") as image_file:
+        return base64.b64encode(image_file.read()).decode('utf-8')
+  else: # PIL image
+    if resize:
+      img = img.resize((512, 512), img.ANTIALIAS)
+    buffered = BytesIO()  # Create a buffer to hold the binary data
+    img.save(buffered, format="JPEG")  # Save image as JPEG (or PNG if needed)
+    return base64.b64encode(buffered.getvalue()).decode("utf-8")
 
