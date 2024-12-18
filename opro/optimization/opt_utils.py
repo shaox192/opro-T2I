@@ -244,7 +244,7 @@ def eval_prompts(orig_query, prompts_ls, gt_img, scorer, verbose=False, step=-1)
 
 def calc_aggregated_score(scores_dict):
   tot_score = (scores_dict["relevance"] / 4 + scores_dict["aesthetics"]) / 2
-  tot_score = np.exp(0.7 * tot_score)
+  # tot_score = np.exp(0.7 * tot_score)
   return tot_score
 
 def save_img(img_ls, step_i, img_id, save_dir):
@@ -368,7 +368,7 @@ def run_evolution_T2I(**kwargs):
     # evolution
     print("\n============== Optimizing ===============")
     for i_step in range(num_search_steps):
-      print(f"\n--Step {i_step + 1}/{num_search_steps}--")
+      print(f"\n--Step {i_step + 1}/{num_search_steps} Image [{i}]/[{len(raw_data)}]--")
       # if not i_step % 10:
       #   print(f"*old_instructions_and_scores: {old_instructions_and_scores}")
 
